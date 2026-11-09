@@ -43,16 +43,9 @@ export default {
   blurb: 'Big questions with exact answers. Get within a factor of ten to score',
   rounds: 5,
   unitPlural: 'questions',
+  section: 'numbers',
   build: (rng) => shuffled(ESTIMATES, rng).slice(0, 5),
   label: (it) => it.q,
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('line', { x1: 8, x2: 88, y1: 24.5, y2: 24.5, class: 'g-rule' }));
-    for (const x of [8, 28, 48, 68, 88]) svg.appendChild(s('line', { x1: x + 0.5, x2: x + 0.5, y1: 20, y2: 29, class: 'g-rule' }));
-    svg.appendChild(s('circle', { cx: 48, cy: 24.5, r: 5, class: 'g-ink' }));
-    svg.appendChild(s('circle', { cx: 34, cy: 24.5, r: 5, class: 'g-accent' }));
-    return svg;
-  },
 
   play(area, it) {
     return new Promise((resolve) => {

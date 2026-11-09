@@ -14,18 +14,9 @@ export default {
   blurb: 'Solve sums to send fighters up two lanes. Harder sums, stronger fighters',
   rounds: 1,
   unitPlural: 'battle',
+  section: 'numbers',
   build: (rng) => [{ seed: Math.floor(rng() * 2 ** 31) }],
   label: () => '90-second battle',
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('line', { x1: 30.5, x2: 30.5, y1: 8, y2: 40, class: 'g-rule' }));
-    svg.appendChild(s('line', { x1: 66.5, x2: 66.5, y1: 8, y2: 40, class: 'g-rule' }));
-    svg.appendChild(s('rect', { x: 24, y: 4, width: 13, height: 9, rx: 2, class: 'g-ink' }));
-    svg.appendChild(s('rect', { x: 60, y: 4, width: 13, height: 9, rx: 2, class: 'g-ink' }));
-    svg.appendChild(s('circle', { cx: 30.5, cy: 30, r: 5, class: 'g-accent' }));
-    svg.appendChild(s('circle', { cx: 66.5, cy: 20, r: 4, class: 'g-outline' }));
-    return svg;
-  },
 
   play(area, item, ctx) {
     return new Promise((resolve) => {
@@ -88,10 +79,10 @@ function run(area, rng, ctx, resolve) {
   const laneBtns = [0, 1].map((l) => h('button', {
     type: 'button', class: 'seg', 'aria-pressed': String(l === 0),
     onclick: () => setLane(l),
-  }, l === 0 ? 'Left lane' : 'Right lane'));
+  }, h('span', { text: l === 0 ? 'Left lane' : 'Right lane' }), h('kbd', { text: l === 0 ? 'L' : 'R' })));
   const tierBtns = TIERS.map((t, i) => h('button', {
     type: 'button', class: 'tier', 'aria-pressed': String(i === 0), onclick: () => setTier(i),
-  }, h('span', { class: 'tier-name', text: t.name }), h('span', { class: 'tier-power', text: `Strength ${t.power}` })));
+  }, h('span', { class: 'tier-name' }, t.name, h('kbd', { text: t.name[0] })), h('span', { class: 'tier-power', text: `Strength ${t.power}` })));
   const problemEl = h('p', { class: 'siege-problem', 'aria-live': 'polite' });
   const input = h('input', {
     class: 'siege-input', type: 'text', inputmode: 'numeric', autocomplete: 'off', spellcheck: 'false',
@@ -111,7 +102,7 @@ function run(area, rng, ctx, resolve) {
       h('form', { class: 'siege-form', onsubmit: (e) => { e.preventDefault(); submit(); } },
         problemEl, h('div', { class: 'siege-answer' }, input, send)),
       feedback,
-      h('p', { class: 'hint', text: 'Arrow keys switch lanes while the answer box is empty' })),
+      h('p', { class: 'hint', text: 'Answers are numbers, so letters are shortcuts: E, M and H pick a sum, L and R pick a lane' })),
     status);
 
   const g = canvas.getContext('2d');
@@ -180,6 +171,11 @@ function run(area, rng, ctx, resolve) {
   }
 
   input.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    const tier = { e: 0, m: 1, h: 2 }[k];
+    if (tier !== undefined) { e.preventDefault(); setTier(tier); return; }
+    if (k === 'l' || k === 'r') { e.preventDefault(); setLane(k === 'l' ? 0 : 1); return; }
     if (input.value === '' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault();
       setLane(e.key === 'ArrowLeft' ? 0 : 1);

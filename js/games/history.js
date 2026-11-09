@@ -40,6 +40,7 @@ export const timeline = {
   blurb: 'Put five moments from history in order',
   rounds: 3,
   unitPlural: 'timelines',
+  section: 'history',
   build(rng) {
     const avoid = new Set();
     const sets = [];
@@ -50,12 +51,9 @@ export const timeline = {
     }
     return sets;
   },
-  label: (set) => set.map((e) => e.text).slice(0, 2).join(' · ') + ' …',
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('line', { x1: 8, x2: 88, y1: 24.5, y2: 24.5, class: 'g-rule' }));
-    [12, 30, 44, 70, 84].forEach((x, i) => svg.appendChild(s('circle', { cx: x, cy: 24.5, r: 4, class: i === 2 ? 'g-accent' : 'g-ink' })));
-    return svg;
+  label: (set) => {
+    const years = set.map((e) => e.year);
+    return `${set.length} events from ${Math.min(...years)} to ${Math.max(...years)}`;
   },
 
   play(area, set) {
@@ -170,7 +168,9 @@ export function pickFirstPairs(rng, count) {
   const out = [];
   const used = new Set();
   let tries = 0;
-  while (out.length < count && tries++ < 5000) {
+  while (out.length < count && tries++ < 50000) {
+    // Endless mode runs past the event list, so start reusing events when stuck.
+    if (tries % 2000 === 0) used.clear();
     const i = Math.floor(rng() * SORTED.length);
     const j = i + 1 + Math.floor(rng() * 6);
     if (j >= SORTED.length) continue;
@@ -190,14 +190,9 @@ export const first = {
   rounds: 10,
   binary: true,
   unitPlural: 'pairs',
-  build: (rng) => pickFirstPairs(rng, 10),
+  section: 'history',
+  build: (rng, { count = 10 } = {}) => pickFirstPairs(rng, count),
   label: ([a, b]) => `${a.text} or ${b.text}`,
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('rect', { x: 10, y: 10, width: 34, height: 28, rx: 4, class: 'g-accent' }));
-    svg.appendChild(s('rect', { x: 52, y: 10, width: 34, height: 28, rx: 4, class: 'g-outline' }));
-    return svg;
-  },
   play(area, pair) {
     return new Promise((resolve) => {
       const choose = (pick) => {
@@ -223,3 +218,115 @@ export const first = {
     });
   },
 };
+
+// ---------------- When? ----------------
+
+export function yearScore(guess, actual) {
+  const diff = Math.abs(guess - actual);
+  return { score: Math.max(0, Math.round(100 - 2 * diff)), diff };
+}
+
+const YEAR_MIN = 400;
+const YEAR_MAX = 2025;
+
+export const when = {
+  id: 'when',
+  title: 'When?',
+  blurb: 'One moment from history. Name the year',
+  rounds: 5,
+  unitPlural: 'moments',
+  section: 'history',
+  build: (rng) => shuffled(EVENTS, rng).slice(0, 5),
+  label: (e) => e.text,
+  summaryVisual: null,
+
+  play(area, ev) {
+    return new Promise((resolve) => {
+      const start = 1900;
+      const yearIn = h('input', {
+        id: 'when-year', class: 'year-input', type: 'text', inputmode: 'numeric', autocomplete: 'off',
+        value: String(start), 'aria-label': 'Your year', maxlength: '4',
+      });
+      const range = h('input', { type: 'range', min: String(YEAR_MIN), max: String(YEAR_MAX), step: '1', value: String(start), class: 'range', 'aria-label': 'Your year, slider' });
+      const minus = button('', { ariaLabel: 'One year earlier', iconLeft: 'arrow-left', class: 'square', onclick: () => set(value() - 1) });
+      const plus = button('', { ariaLabel: 'One year later', iconLeft: 'arrow-right', class: 'square', onclick: () => set(value() + 1) });
+      const lock = button('Lock it in', { kind: 'primary', onclick: submit });
+      const picker = h('div', { class: 'year-picker' },
+        h('div', { class: 'year-row' }, minus, yearIn, plus),
+        range,
+        h('div', { class: 'range-ends' }, h('span', { text: String(YEAR_MIN) }), h('span', { text: String(YEAR_MAX) })),
+        h('div', { class: 'controls' }, h('p', { class: 'hint', text: 'Type a year, drag, or use the arrows' }), lock));
+      area.append(
+        h('p', { class: 'chart-sub first', text: 'In what year?' }),
+        h('h2', { class: 'question', text: ev.text }),
+        picker);
+
+      const value = () => {
+        const v = parseInt(yearIn.value, 10);
+        return Number.isFinite(v) ? v : Number(range.value);
+      };
+      function set(v) {
+        v = Math.max(YEAR_MIN, Math.min(YEAR_MAX, v));
+        yearIn.value = String(v);
+        range.value = String(v);
+        lock.disabled = false;
+      }
+      range.addEventListener('input', () => { yearIn.value = range.value; lock.disabled = false; });
+      yearIn.addEventListener('input', () => {
+        yearIn.value = yearIn.value.replace(/\D/g, '').slice(0, 4);
+        const v = parseInt(yearIn.value, 10);
+        const ok = Number.isFinite(v) && v >= YEAR_MIN && v <= YEAR_MAX;
+        lock.disabled = !ok;
+        if (ok) range.value = String(v);
+      });
+      yearIn.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') { e.preventDefault(); set(value() + (e.shiftKey ? 10 : 1)); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); set(value() - (e.shiftKey ? 10 : 1)); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (!lock.disabled) submit(); }
+      });
+
+      function submit() {
+        const guess = value();
+        if (!(guess >= YEAR_MIN && guess <= YEAR_MAX)) return;
+        const { score, diff } = yearScore(guess, ev.year);
+        picker.remove();
+        area.appendChild(yearStrip(guess, ev.year));
+        resolve({
+          score,
+          verdict: diff === 0 ? 'Exactly right' : `${diff} year${diff === 1 ? '' : 's'} ${guess < ev.year ? 'too early' : 'too late'}`,
+          detail: `It happened in ${ev.year}. You said ${guess}.`,
+          record: { line: `You ${guess}, it was ${ev.year}` },
+        });
+      }
+    });
+  },
+};
+
+// Your year and the real one on a short stretch of time, with other events
+// from the same stretch for context.
+function yearStrip(guess, actual) {
+  const lo0 = Math.min(guess, actual);
+  const hi0 = Math.max(guess, actual);
+  const pad = Math.max(5, Math.round((hi0 - lo0) * 0.25));
+  const lo = lo0 - pad;
+  const hi = hi0 + pad;
+  const W = 640;
+  const x = (y) => 16 + ((y - lo) / (hi - lo)) * (W - 32);
+  const svg = s('svg', { viewBox: `0 0 ${W} 96`, width: '100%', class: 'year-strip', role: 'img', 'aria-label': `Your year ${guess}, the real year ${actual}` });
+  svg.appendChild(s('line', { x1: 16, x2: W - 16, y1: 48.5, y2: 48.5, class: 'baseline' }));
+  const context = SORTED.filter((e) => e.year > lo && e.year < hi && e.year !== actual && e.year !== guess).slice(0, 4);
+  for (const e of context) {
+    svg.appendChild(s('line', { x1: x(e.year), x2: x(e.year), y1: 42, y2: 55, class: 'grid' }));
+  }
+  svg.appendChild(s('line', { x1: x(Math.min(guess, actual)), x2: x(Math.max(guess, actual)), y1: 48.5, y2: 48.5, class: 'gap' }));
+  const label = (yr, cls, above) => {
+    const xx = x(yr);
+    const anchor = xx < 60 ? 'start' : xx > W - 60 ? 'end' : 'middle';
+    svg.appendChild(s('circle', { cx: xx, cy: 48.5, r: 6, class: 'dot ' + cls }));
+    svg.appendChild(s('text', { x: xx, y: above ? 28 : 80, class: 'mark-label ' + cls, 'text-anchor': anchor }, (cls === 'you' ? 'You ' : '') + yr));
+  };
+  label(actual, 'actual', true);
+  if (guess !== actual) label(guess, 'you', false);
+  return h('div', { class: 'strip-box' }, svg,
+    context.length ? h('p', { class: 'strip-note', text: 'Also in this stretch: ' + context.map((e) => `${e.text} (${e.year})`).join(' · ') }) : null);
+}

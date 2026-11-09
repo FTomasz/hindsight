@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Hindsight: daily games about numbers, history and words</title>
-  <meta name="description" content="Nine free daily games. Draw where a word went in 200 years of books, estimate big numbers, put history in order, win a math battle and more. Real data, every answer sourced.">
+  <meta name="description" content="Ten free daily games. Draw where a word went in 200 years of books, estimate big numbers, put history in order, win a math battle and more. Real data, every answer sourced.">
   <link rel="canonical" href="https://prathammukewar.github.io/hindsight/">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Hindsight">
   <meta property="og:url" content="https://prathammukewar.github.io/hindsight/">
   <meta property="og:title" content="Hindsight: you see the start, draw the rest">
-  <meta property="og:description" content="Nine daily games built on real data: 200 years of books, big numbers and history.">
+  <meta property="og:description" content="Ten daily games built on real data: 200 years of books, big numbers and history.">
   <meta property="og:image" content="https://prathammukewar.github.io/hindsight/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="A chart of how often books used the word telegraph, with a red pencil guess drawn over the hidden part.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Hindsight: you see the start, draw the rest">
-  <meta name="twitter:description" content="Nine daily games built on real data: 200 years of books, big numbers and history.">
+  <meta name="twitter:description" content="Ten daily games built on real data: 200 years of books, big numbers and history.">
   <meta name="twitter:image" content="https://prathammukewar.github.io/hindsight/og-image.png">
 
   <meta name="theme-color" content="#f7f4ee" media="(prefers-color-scheme: light)">
@@ -29,8 +29,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="modulepreload" href="js/app.js">
+  <link rel="stylesheet" href="css/style.css?v=7d120e8cd4">
+  <!-- importmap -->
+  <script type="importmap">
+{
+  "imports": {
+    "./js/app.js": "./js/app.js?v=b022a976d2",
+    "./js/chart.js": "./js/chart.js?v=8a4e79ccf7",
+    "./js/content/estimates.js": "./js/content/estimates.js?v=ed0d4f470e",
+    "./js/content/events.js": "./js/content/events.js?v=7c88e44cfd",
+    "./js/content/words.js": "./js/content/words.js?v=4669aec517",
+    "./js/core.js": "./js/core.js?v=1e83c45fd5",
+    "./js/data.js": "./js/data.js?v=1675ae784f",
+    "./js/games/draw.js": "./js/games/draw.js?v=1cc9e77924",
+    "./js/games/estimate.js": "./js/games/estimate.js?v=83fd9c9c01",
+    "./js/games/history.js": "./js/games/history.js?v=c7b7fc6cce",
+    "./js/games/index.js": "./js/games/index.js?v=5e9a49c51e",
+    "./js/games/siege.js": "./js/games/siege.js?v=8df6ee1d17",
+    "./js/games/wordgames.js": "./js/games/wordgames.js?v=9d4f9ee397",
+    "./js/siege-core.js": "./js/siege-core.js?v=90348f3916",
+    "./js/ui.js": "./js/ui.js?v=1909c97ce3",
+    "./js/words.js": "./js/words.js?v=fd0fae7e9d"
+  }
+}
+  </script>
+  <!-- /importmap -->
+  <link rel="modulepreload" href="js/app.js?v=b022a976d2">
 </head>
 <body>
   <div id="app">
@@ -38,6 +62,6 @@
       <noscript><p class="noscript">Hindsight is a set of games that needs JavaScript. Turn it on to play.</p></noscript>
     </main>
   </div>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=b022a976d2"></script>
 </body>
 </html>

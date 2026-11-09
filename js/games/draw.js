@@ -17,6 +17,8 @@ export default {
   blurb: 'See how often books used a word up to some year, then draw where the line went next',
   rounds: 5,
   unitPlural: 'charts',
+  section: 'words',
+  featured: true,
 
   build(rng, { seed, day }) {
     const ids = seed.startsWith('d') ? idsForDay(day, allIds) : shuffled(allIds, rng).slice(0, 5);
@@ -28,8 +30,14 @@ export default {
   tile({ large }) {
     const w = large ? 360 : 96;
     const hgt = large ? 200 : 48;
-    // A real curve that is not in the daily pool: "telegraph" in English books.
-    return spark(series('telegraph'), 1850, { width: w, height: hgt, split: 1890 });
+    // The real curve for "telegraph", which is not in any daily set, with a
+    // pencil guess drawn over the hidden part to show how the game works.
+    const vals = series('telegraph');
+    const cut = 1890;
+    const a = vals[cut - 1850];
+    const guess = [];
+    for (let y = cut; y <= 2022; y++) guess.push(a * (1 + 0.6 * Math.sin(Math.min(1, (y - cut) / 70) * Math.PI / 2)));
+    return spark(vals, 1850, { width: w, height: hgt, split: cut, guess, guessStart: cut });
   },
 
   summaryVisual(r, rec) {

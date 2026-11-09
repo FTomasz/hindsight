@@ -212,3 +212,35 @@ test('siege sums always have whole positive answers', async () => {
   assert.equal(siegeScore({ you: [1000, 1000], bot: [1000, 1000] }, 0, 0).score, 50);
   assert.equal(siegeScore({ you: [0, 0], bot: [1000, 1000] }, 0, 2000).score, 0);
 });
+
+test('every automatic note matches the numbers it describes', () => {
+  const fmt = (v) => (v < 1000 ? String(Number(v.toPrecision(3))) : Math.round(v).toLocaleString('en-US'));
+  const auto = ROUNDS.filter((r) => r.auto);
+  assert.ok(auto.length >= 80, 'enough automatic rounds: ' + auto.length);
+  for (const r of auto) {
+    const ci = r.cutoff - r.start;
+    const anchor = r.values[ci];
+    const hidden = r.values.slice(ci + 1);
+    const last = r.values[r.values.length - 1];
+    assert.ok(r.cutoff - r.start <= 70 && r.end - r.cutoff <= 70, r.id + ' spans');
+    assert.ok(flatScore(r) <= 55, r.id + ' has a real turn');
+    const peak = /a peak of ([\d.,]+) uses per million words in (\d{4}), ([\d.]+) times its (\d{4}) level/.exec(r.note);
+    if (peak) {
+      const pv = Math.max(...hidden);
+      assert.equal(peak[1], fmt(pv), r.id + ' peak value');
+      assert.equal(Number(peak[2]), r.cutoff + 1 + hidden.indexOf(pv), r.id + ' peak year');
+      assert.equal(peak[3], (pv / anchor).toFixed(1), r.id + ' peak ratio');
+      assert.equal(Number(peak[4]), r.cutoff);
+    }
+    if (/never climbed back/.test(r.note)) assert.ok(Math.max(...hidden) <= anchor, r.id + ' never back');
+    const end = /In 2022 it was at ([\d.,]+), (?:(\d+)% (above|below)|([\d.]+) times|about where)/.exec(r.note);
+    assert.ok(end, r.id + ' has an ending: ' + r.note);
+    assert.equal(end[1], fmt(last), r.id + ' last value');
+    if (end[2]) {
+      const pct = Math.round(Math.abs((last - anchor) / anchor) * 100);
+      assert.equal(Number(end[2]), pct, r.id + ' percent');
+      assert.equal(end[3], last > anchor ? 'above' : 'below', r.id + ' direction');
+    }
+    if (end[4]) assert.equal(end[4], (last / anchor).toFixed(1), r.id + ' times');
+  }
+});

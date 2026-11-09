@@ -44,10 +44,9 @@ export const peak = {
   blurb: 'Pick the year books used a word the most',
   rounds: 5,
   unitPlural: 'words',
+  section: 'words',
   build: (rng) => shuffled(PEAK_POOL, rng).slice(0, 5),
   label: (p) => q(p),
-  // "telegraph" isn't in the Peak year pool, so the tile spoils nothing.
-  tile: () => spark(series('telegraph'), START, { width: 96, height: 48, mark: peakYear('telegraph') }),
   summaryVisual: (p, rec) => spark(series(p), START, { width: 96, height: 40, mark: rec && rec.guess }),
 
   play(area, phrase) {
@@ -106,7 +105,9 @@ function pickPairs(rng, count) {
   const out = [];
   const used = new Set();
   let tries = 0;
-  while (out.length < count && tries++ < 5000) {
+  while (out.length < count && tries++ < 50000) {
+    // Endless mode runs past the word list, so start reusing words when stuck.
+    if (tries % 2000 === 0) used.clear();
     const year = 1900 + Math.floor(rng() * 121); // 1900..2020
     const a = PHRASES[Math.floor(rng() * PHRASES.length)];
     const b = PHRASES[Math.floor(rng() * PHRASES.length)];
@@ -129,14 +130,9 @@ export const battle = {
   rounds: 10,
   binary: true,
   unitPlural: 'matchups',
-  build: (rng) => pickPairs(rng, 10),
+  section: 'words',
+  build: (rng, { count = 10 } = {}) => pickPairs(rng, count),
   label: (it) => `${q(it.a)} vs ${q(it.b)}, ${it.year}`,
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('rect', { x: 8, y: 12, width: 56, height: 8, rx: 2, class: 'g-ink' }));
-    svg.appendChild(s('rect', { x: 8, y: 28, width: 32, height: 8, rx: 2, class: 'g-accent' }));
-    return svg;
-  },
   play(area, it) {
     return new Promise((resolve) => {
       const box = h('div', { class: 'chart-box' });
@@ -179,7 +175,8 @@ function pickTrends(rng, count) {
   const out = [];
   const used = new Set();
   let tries = 0;
-  while (out.length < count && tries++ < 5000) {
+  while (out.length < count && tries++ < 50000) {
+    if (tries % 2000 === 0) used.clear();
     const p = PHRASES[Math.floor(rng() * PHRASES.length)];
     if (used.has(p)) continue;
     const y1 = 1860 + Math.floor(rng() * 140);
@@ -207,15 +204,15 @@ export const trend = {
   rounds: 10,
   binary: true,
   unitPlural: 'words',
-  build: (rng) => shuffled(pickTrends(rng, 10), rng),
-  label: (it) => `${q(it.phrase)}, ${it.y1} or ${it.y2}`,
-  tile: () => {
-    const svg = s('svg', { width: 96, height: 48, viewBox: '0 0 96 48', 'aria-hidden': 'true', class: 'glyph' });
-    svg.appendChild(s('rect', { x: 20, y: 14, width: 14, height: 26, rx: 2, class: 'g-ink' }));
-    svg.appendChild(s('rect', { x: 60, y: 28, width: 14, height: 12, rx: 2, class: 'g-accent' }));
-    svg.appendChild(s('line', { x1: 8, x2: 88, y1: 40.5, y2: 40.5, class: 'g-rule' }));
-    return svg;
+  section: 'words',
+  build: (rng, { count = 10 } = {}) => {
+    const items = pickTrends(rng, count);
+    // Shuffle within blocks of ten so endless mode stays balanced too.
+    const out = [];
+    for (let i = 0; i < items.length; i += 10) out.push(...shuffled(items.slice(i, i + 10), rng));
+    return out;
   },
+  label: (it) => `${q(it.phrase)}, ${it.y1} or ${it.y2}`,
   play(area, it) {
     return new Promise((resolve) => {
       const box = h('div', { class: 'chart-box' });
@@ -277,6 +274,7 @@ export const match = {
   blurb: 'Four words, four unlabeled curves. Put each word on its line',
   rounds: 3,
   unitPlural: 'boards',
+  section: 'words',
   build(rng) {
     const avoid = new Set();
     const boards = [];
@@ -288,13 +286,6 @@ export const match = {
     return boards;
   },
   label: (b) => b.curves.map(q).join(', '),
-  tile: () => {
-    const wrap = h('div', { class: 'mini-grid' });
-    for (const p of ['radio', 'vegan', 'Y2K', 'telegraph']) {
-      wrap.appendChild(spark(series(p).slice(1900 - START), 1900, { width: 44, height: 20 }));
-    }
-    return wrap;
-  },
   play(area, board) {
     return new Promise((resolve) => {
       const letters = ['A', 'B', 'C', 'D'];
