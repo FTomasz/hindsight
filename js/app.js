@@ -51,6 +51,16 @@ function formatTotal(game, scores) {
   return `${scores.reduce((a, b) => a + b, 0)} / ${scores.length * 100}`;
 }
 
+function scorePercent(game, scores) {
+  const score = game.binary ? rightCount(scores) : scores.reduce((a, b) => a + b, 0) / 100;
+  return Math.round((score / scores.length) * 100);
+}
+
+function scoreOutOf500(game, scores) {
+  const earned = game.binary ? rightCount(scores) : scores.reduce((a, b) => a + b, 0) / 100;
+  return Math.round((earned / scores.length) * 500);
+}
+
 // Late plays of past editions count for averages but never for streaks.
 function doneDays(game, { onTime }) {
   const days = (store.games[game.id] && store.games[game.id].days) || {};
@@ -219,7 +229,12 @@ function tocRow(g, day) {
 }
 
 function todayCard(day, played) {
-  const lines = played.map((g) => [g.title, formatTotal(g, dayRecord(g.id, day).scores)]);
+  const lines = played.map((g) => {
+    const scores = dayRecord(g.id, day).scores;
+    return [g.title, formatTotal(g, scores), scorePercent(g, scores)];
+  });
+  const totalScore = played.reduce((sum, g) => sum + scoreOutOf500(g, dayRecord(g.id, day).scores), 0);
+  const totalPercent = Math.round((totalScore / (played.length * 500)) * 100);
   const text = `Hindsight No. ${day} · ${played.length} of ${GAMES.length} games\n` + lines.map(([t, s]) => `${t} ${s}`).join('\n');
   return h('section', { class: 'today-card' },
     h('div', { class: 'today-head' },
@@ -230,7 +245,12 @@ function todayCard(day, played) {
         else if (r === 'failed') toast('Couldn’t copy. Your browser blocked the clipboard');
       } })),
     h('ul', { class: 'today-lines' },
-      lines.map(([t, s]) => h('li', null, h('span', { text: t }), h('span', { class: 'toc-leader', 'aria-hidden': 'true' }), h('span', { class: 'mono', text: s })))));
+      h('li', { class: 'today-total' },
+        h('span', { text: 'Total score' }),
+        h('span', { class: 'toc-leader', 'aria-hidden': 'true' }),
+        h('span', { class: 'mono', text: totalScore }),
+        h('span', { class: 'mono today-percent' }, h('span', { class: 'today-total-separator', text: '|' }), `${totalPercent}%`)),
+      lines.map(([t, s, p]) => h('li', null, h('span', { text: t }), h('span', { class: 'toc-leader', 'aria-hidden': 'true' }), h('span', { class: 'mono', text: s }), h('span', { class: 'mono today-percent', text: `${p}%` })))));
 }
 
 function pastEditions(day) {

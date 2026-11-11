@@ -264,8 +264,13 @@ h1, h2, h3, p { margin: 0; }
 .today-head h2 { font: 500 20px/1.2 var(--serif); }
 .today-head .btn { height: 36px; padding: 0 14px; font-size: 14px; }
 .today-lines { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; }
-.today-lines li { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 12px; font-size: 14px; line-height: 24px; }
+.today-lines li { display: grid; grid-template-columns: auto 1fr auto auto; align-items: baseline; gap: 12px; font-size: 14px; line-height: 24px; }
 .today-lines .toc-leader { grid-area: auto; margin-bottom: 7px; }
+.today-percent { min-width: 4ch; text-align: right; }
+.today-total { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.today-total > span:first-child { font-size: 28px; }
+.today-total .mono { font-size: 30px; font-weight: 600; }
+.today-total-separator { margin-right: 10px; color: var(--muted); font-weight: 400; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px; }
 
 .site-foot {
